@@ -1,89 +1,65 @@
-# Rust PDF Link Check Core
+# pdflinkcheck-rust
 
-This crate is a high-performance native core for **PDF link and table-of-contents analysis**.
-It is one of the analysis engines used by the PDF Link Check project, which include:
-
-- **pypdf-based engine** — Maximizes portability (including Termux)
-- **PyMuPDF-based engine** — Exposes a rich, high-level PDF object model
-- **PDFium-based Rust engine (this crate)** — Prioritizes performance on supported platforms while avoiding
-  PyMuPDF's AGPLv3+ licensing restrictions.
-
-Source repository:
-https://github.com/City-of-Memphis-Wastewater/pdflinkcheck
-
----
-
-## Why PDFium?
-
-PDFium was selected for this Rust implementation after evaluating multiple
-approaches to reliable link and anchor-text extraction.
-
-- PDFium provides accurate, low-level access to link annotations and their
-  associated geometry.
-- It reliably associates link annotations with visible anchor text, which
-  proved difficult using several pure-Rust PDF libraries.
-- It is battle-tested at scale and widely used in production environments.
-
-### Trade-offs and platform considerations
-
-PDFium does not build on Termux, which limits its portability. For this reason,
-Termux compatibility is provided by the project’s `pypdf`-based Python engine,
-implemented in `src/pdflinkcheck/analyze_pypdf.py`.
-
-Several Rust-native PDF libraries (`lopdf`, `pdf`) were evaluated but were unable
-to consistently identify anchor text associated with link annotations. As a
-result, PDFium was chosen for this Rust core despite its platform constraints.
-
----
-
-## Design notes
-
-This crate is intentionally focused on **PDF analysis**, not general-purpose
-PDF manipulation.
-
-Internally, it uses PDFium via the `pdfium-render` crate, but PDFium types are
-treated strictly as implementation details. The public API exposes only the crate-defined,
-stable Rust data structures (`AnalysisResult`, `LinkRecord`, `TocEntry`) and
-JSON output via an FFI boundary.
-
-This design minimizes API surface area while preserving performance and
-long-term maintainability.
-
----
+The high-performance Rust core for `pdflinkcheck`. This package provides native PDF analysis capabilities using PDFium via PyO3 bindings.
 
 ## Prerequisites
 
-This crate requires the **PDFium** (`libpdfium`) shared library at runtime.
+- **Rust & Cargo**: [Install here](https://rustup.rs/)
+    
+- **Python 3.10+**
+    
+- **Maturin**: `uv tool install maturin` or `pip install maturin`
+    
+- **libpdfium.so**: This project requires a compiled PDFium shared library.
+    
 
-## Setup (Linux x64)
-```bash
-wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-x64.tgz
-tar -xvf pdfium-linux-x64.tgz
-cp lib/libpdfium.so .
+## Project Structure
+
+- `src/`: Rust source code (PyO3 bindings and analysis logic).
+    
+- `pdflinkcheck_rust/`: Python package wrapper.
+    
+- `pdflinkcheck_rust/libpdfium.so`: The PDFium binary (must be present for the engine to function).
+    
+
+## Development
+
+To compile the Rust code and install the package into your current virtual environment:
+
+Bash
+
+```
+# Ensure libpdfium.so is in pdflinkcheck_rust/
+maturin develop
 ```
 
-### Building the Rust crate
+To run the standalone Rust CLI:
 
-To build the release library and ensure it finds `libpdfium.so` at runtime:
+Bash
 
-```bash
-RUSTFLAGS="-C link-arg=-Wl,-rpath,\$ORIGIN" cargo build --release
+```
+cargo build --release
+./target/release/pdflinkcheck-rust <path_to_pdf>
 ```
 
-This embeds a runtime search path so the resulting binary or shared library will look in its own directory for `libpdfium.so`.
+## Environment Configuration
 
-**For Development:**
-If you are running the project from source, ensure the dynamic linker can find the shared objects:
+Because the Rust engine links to PDFium at runtime, you may need to point your library loader to the package directory during local testing:
 
-```bash
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/rust_pdflinkcheck/target/release
+Bash
+
+```
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/pdflinkcheck_rust
 ```
 
----
+## Building for Distribution
 
-## What is *not* exposed
-This crate does not expose PDF document, page, or annotation objects as part of its public API. 
-All PDFium interaction is encapsulated within the analysis engine.
+To create a wheel for installation in other projects:
 
+Bash
 
+```
+maturin build --release
+```
 
+The resulting wheel will be located in `target/wheels/`.
