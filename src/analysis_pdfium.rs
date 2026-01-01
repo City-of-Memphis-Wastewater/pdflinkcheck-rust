@@ -6,11 +6,20 @@ use crate::types::{AnalysisResult, LinkRecord, TocEntry};
 
 pub fn analyze_pdf(path: &str) -> Result<AnalysisResult, String> {
     // This consolidated logic handles the binding in one go
+    //let pdfium = Pdfium::new(
+    //    Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
+    //        .or_else(|_| Pdfium::bind_to_system_library())
+    //        .map_err(|e| format!("Could not find libpdfium.so in ./ or system: {:?}", e))?
+    //);
     let pdfium = Pdfium::new(
-        Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
-            .or_else(|_| Pdfium::bind_to_system_library())
-            .map_err(|e| format!("Could not find libpdfium.so in ./ or system: {:?}", e))?
-    );
+        // 1. Try system-installed pdfium first
+        Pdfium::bind_to_system_library()
+            .or_else(|_| {
+                // 2. Try looking in the same folder as the executable/module
+                Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
+            })
+            .map_err(|e| format!("Could not find libpdfium.so: {:?}", e))?
+        );
     let doc = pdfium.load_pdf_from_file(path, None)
         .map_err(|e| format!("Failed to open PDF: {:?}", e))?;
     let mut links = Vec::new();

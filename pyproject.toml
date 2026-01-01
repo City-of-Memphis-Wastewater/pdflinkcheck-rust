@@ -20,3 +20,4 @@ python-source = "."
 include-bins = true
 # This feature is essential for PyO3 modules
 features = ["pyo3/extension-module"]
+include = ["pdflinkcheck_rust/libpdfium.so"]
