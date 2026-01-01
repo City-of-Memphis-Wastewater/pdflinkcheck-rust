@@ -14,7 +14,7 @@ build-backend = "maturin"
 # This points to the Rust code
 manifest-path = "Cargo.toml"
 # This ensures the .so / .pyd file is placed inside a folder of this name
-module-name = "pdflinkcheck_rust
+module-name = "pdflinkcheck_rust"
 python-source = "."
 # Ensure the binary is included in the wheel
 include-bins = true

@@ -1,4 +1,9 @@
 // lib.rs
+use pyo3::prelude::*;
+
+pub mod types;
+pub mod analysis_pdfium;
+
 pub use crate::analysis_pdfium::analyze_pdf;
 
 // --- PyO3 Python Bindings ---
