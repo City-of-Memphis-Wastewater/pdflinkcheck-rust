@@ -27,3 +27,4 @@ defunct/
 include/
 lib/
 licenses/
+*.so
