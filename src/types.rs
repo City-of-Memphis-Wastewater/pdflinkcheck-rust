@@ -1,5 +1,5 @@
 // types.rs
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LinkRecord {

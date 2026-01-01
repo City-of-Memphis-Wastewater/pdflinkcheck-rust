@@ -12,21 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
-
       - name: Check Formatting
         run: cargo fmt --all -- --check
-
       - name: Lint with Clippy
         run: cargo clippy -- -D warnings
-
       - name: Run Rust Tests
         run: cargo test
 
@@ -35,22 +28,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-
-      - name: Install uv
-        run: pip install uv
-
-      - name: Install maturin
-        run: uv pip install --system maturin
-
-      - name: Build and Install Extension
-        # We use --inplace to test the binding without a full site-packages install
-        run: maturin develop
-
-      - name: Verify Python Import
+          python-version: "3.12" # Pin to a stable version
+      - name: Install uv and maturin
         run: |
+          pip install uv
+          uv pip install --system maturin
+      - name: Build and Verify
+        run: |
+          # Use maturin build instead of develop in CI to avoid venv requirements
+          maturin build
+          # Verify it can at least compile the bindings
+          pip install target/wheels/*.whl
           python -c "import pdflinkcheck_rust; print('Binding works')"

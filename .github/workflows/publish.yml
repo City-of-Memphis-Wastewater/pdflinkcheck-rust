@@ -15,69 +15,62 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [x86_64, aarch64]
+        include:
+          - target: x86_64
+            pdfium_arch: linux-x64
+          - target: aarch64
+            pdfium_arch: linux-arm64
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
+      - name: Download PDFium
+        run: |
+          mkdir -p pdflinkcheck_rust
+          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${{ matrix.pdfium_arch }}.tgz
+          tar -xzf pdfium-${{ matrix.pdfium_arch }}.tgz -C pdflinkcheck_rust/ lib/libpdfium.so
+          mv pdflinkcheck_rust/lib/libpdfium.so pdflinkcheck_rust/
+      - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
-          sccache: 'true'
           manylinux: auto
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-linux-${{ matrix.target }}
-          path: dist
 
   windows:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        target: [x64]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Download PDFium
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-windows-x64.zip" -OutFile "pdfium.zip"
+          Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium"
+          if (!(Test-Path "pdflinkcheck_rust")) { New-Item -ItemType Directory -Path "pdflinkcheck_rust" }
+          Copy-Item "temp_pdfium/x64/bin/pdfium.dll" -Destination "pdflinkcheck_rust/pdfium.dll"
+      - uses: PyO3/maturin-action@v1
         with:
-          python-version: '3.12'
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}
+          target: x64
           args: --release --out dist --find-interpreter
-          sccache: 'true'
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-windows-${{ matrix.target }}
-          path: dist
 
   macos:
     runs-on: macos-latest
     strategy:
       matrix:
-        target: [x86_64, aarch64]
+        include:
+          - target: x86_64
+            pdfium_arch: mac-x64
+          - target: aarch64
+            pdfium_arch: mac-arm64
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
+      - name: Download PDFium
+        run: |
+          mkdir -p pdflinkcheck_rust
+          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${{ matrix.pdfium_arch }}.tgz
+          tar -xzf pdfium-${{ matrix.pdfium_arch }}.tgz -C pdflinkcheck_rust/ lib/libpdfium.dylib
+          mv pdflinkcheck_rust/lib/libpdfium.dylib pdflinkcheck_rust/
+      - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
-          sccache: 'true'
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-macos-${{ matrix.target }}
-          path: dist
-
   sdist:
     runs-on: ubuntu-latest
     steps:

@@ -1,8 +1,8 @@
 // lib.rs
 use pyo3::prelude::*;
 
-pub mod types;
 pub mod analysis_pdfium;
+pub mod types;
 
 pub use crate::analysis_pdfium::analyze_pdf;
 
@@ -10,12 +10,12 @@ pub use crate::analysis_pdfium::analyze_pdf;
 #[pyfunction]
 #[pyo3(name = "analyze_pdf")] // This names the function in Python
 fn analyze_pdf_py(path: String) -> PyResult<String> {
-    let result = analyze_pdf(&path)
-        .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e))?;
-    
+    let result =
+        analyze_pdf(&path).map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e))?;
+
     let json = serde_json::to_string(&result)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
-    
+
     Ok(json)
 }
 

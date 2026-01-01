@@ -1,8 +1,7 @@
-
 // analysis_pdfium.rs
+use crate::types::{AnalysisResult, LinkRecord, TocEntry};
 use pdfium_render::prelude::*;
 use std::collections::HashSet;
-use crate::types::{AnalysisResult, LinkRecord, TocEntry};
 
 pub fn analyze_pdf(path: &str) -> Result<AnalysisResult, String> {
     // This consolidated logic handles the binding in one go
@@ -18,9 +17,10 @@ pub fn analyze_pdf(path: &str) -> Result<AnalysisResult, String> {
                 // 2. Try looking in the same folder as the executable/module
                 Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
             })
-            .map_err(|e| format!("Could not find libpdfium.so: {:?}", e))?
-        );
-    let doc = pdfium.load_pdf_from_file(path, None)
+            .map_err(|e| format!("Could not find libpdfium.so: {:?}", e))?,
+    );
+    let doc = pdfium
+        .load_pdf_from_file(path, None)
         .map_err(|e| format!("Failed to open PDF: {:?}", e))?;
     let mut links = Vec::new();
     let mut toc = Vec::new();
@@ -41,7 +41,12 @@ pub fn analyze_pdf(path: &str) -> Result<AnalysisResult, String> {
             if let PdfPageAnnotation::Link(ref link_annot) = annot {
                 let mut record = LinkRecord {
                     page: page_num,
-                    rect: Some((rect.left().value, rect.bottom().value, rect.right().value, rect.top().value)),
+                    rect: Some((
+                        rect.left().value,
+                        rect.bottom().value,
+                        rect.right().value,
+                        rect.top().value,
+                    )),
                     link_text: String::new(),
                     r#type: "link".to_string(),
                     url: None,
@@ -87,9 +92,15 @@ pub fn analyze_pdf(path: &str) -> Result<AnalysisResult, String> {
 }
 
 // Helper for recursive TOC extraction
-fn walk_bookmarks(bookmark: &PdfBookmark, level: i32, toc: &mut Vec<TocEntry>, seen: &mut HashSet<(String, i32)>) {
+fn walk_bookmarks(
+    bookmark: &PdfBookmark,
+    level: i32,
+    toc: &mut Vec<TocEntry>,
+    seen: &mut HashSet<(String, i32)>,
+) {
     let title = bookmark.title().unwrap_or_default();
-    let target_page = bookmark.destination()
+    let target_page = bookmark
+        .destination()
         .and_then(|d| d.page_index().ok())
         .unwrap_or(0) as i32;
 
