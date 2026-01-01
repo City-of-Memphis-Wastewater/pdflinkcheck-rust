@@ -9,7 +9,6 @@ wheels/
 
 # Virtual environments
 .venv/
-
 .ipynb_checkpoints/
 
 # Samples, examples, sandbox
@@ -28,3 +27,5 @@ include/
 lib/
 licenses/
 *.so
+
+*.pdf
