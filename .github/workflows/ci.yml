@@ -39,7 +39,8 @@ jobs:
       - name: Build and Verify
         run: |
           # Build the wheel locally in CI
-          maturin build
+          # Force maturin to build only for the version we just set up with actions/setup-python
+          maturin build --interpreter python3.12
           # Install the built wheel from the target directory
           pip install target/wheels/*.whl
           # Verify the import works with the new structure
