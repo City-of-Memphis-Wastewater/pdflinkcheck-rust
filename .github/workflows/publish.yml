@@ -48,25 +48,27 @@ jobs:
       - name: Download PDFium
         shell: pwsh
         run: |
-          if (!(Test-Path "python/pdflinkcheck_rust")) { 
-              New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" -Force 
+          if (!(Test-Path "python/pdflinkcheck_rust")) {
+              New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" -Force
           }
-          
-          # 1. Use the DIRECT versioned URL to skip the problematic redirect
-          $url = "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7606/pdfium-windows-x64.zip"
-          
-          # 2. Use Invoke-WebRequest - it's more "native" to PowerShell runners
-          # and often handles the TLS/networking in GitHub Actions better than curl.exe
-          Invoke-WebRequest -Uri $url -OutFile "pdfium.zip"
-          
-          # 3. Check length (should be ~2-3MB)
-          if ((Get-Item "pdfium.zip").Length -lt 100000) { 
-              throw "Download failed - file is too small. Check the URL." 
+          # Use the latest redirect (robust and always gets the newest build)
+          $url = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-windows-x64.tgz"
+          Invoke-WebRequest -Uri $url -OutFile "pdfium.tgz"
+
+          # Check approximate size (~20-30 MB for recent pdfium.dll)
+          if ((Get-Item "pdfium.tgz").Length -lt 1000000) {
+              throw "Download failed - file is too small. Check the URL or network."
           }
-          
-          Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium" -Force
-          Copy-Item "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/pdfium.dll" -Force
-          
+
+          # Expand the tgz (PowerShell 7+ on windows-latest has tar built-in)
+          tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/
+
+          # The file is extracted to lib/pdfium.dll
+          Move-Item "python/pdflinkcheck_rust/lib/pdfium.dll" "python/pdflinkcheck_rust/pdfium.dll" -Force
+
+          # Cleanup
+          Remove-Item "pdfium.tgz"
+          Remove-Item -Recurse "python/pdflinkcheck_rust/lib"    
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
