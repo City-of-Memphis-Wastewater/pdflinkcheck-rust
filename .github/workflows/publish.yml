@@ -44,8 +44,14 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path python/pdflinkcheck_rust
           # Use a specific version or 'latest' - 'latest' can be tricky with direct downloads
-          $url = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.zip"
-          Invoke-WebRequest -Uri $url -OutFile "pdfium.zip"
+          #$url = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.zip"
+          #Invoke-WebRequest -Uri $url -OutFile "pdfium.zip"
+          # Using a hardcoded version tag to bypass redirect issues
+          $url = "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F6885/pdfium-win-x64.zip"
+          
+          # Use -MaximumRedirection just in case
+          Invoke-WebRequest -Uri $url -OutFile "pdfium.zip" -MaximumRedirection 5
+          
           Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium"
           
           # Move the DLL to the package folder
