@@ -36,6 +36,7 @@ jobs:
           sccache: 'true'
   windows:
     runs-on: windows-latest
+    if: false # skip, download zip fails
     steps:
       - uses: actions/checkout@v4
 
@@ -55,18 +56,23 @@ jobs:
           #Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium"
           #Move-Item -Path "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/"
           
-          gh release download chromium/6885 --repo bblanchon/pdfium-binaries --pattern "pdfium-win-x64.zip"
+          #gh release download chromium/6885 --repo bblanchon/pdfium-binaries --pattern "pdfium-win-x64.zip"
+
+          $url = "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/6885/pdfium-win-x64.zip"
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Invoke-WebRequest -Uri $url -OutFile "pdfium.zip" -UseBasicParsing
 
           ls
           
-          Expand-Archive -Path "pdfium-win-x64.zip" -DestinationPath "temp_pdfium"
+          #Expand-Archive -Path "pdfium-win-x64.zip" -DestinationPath "temp_pdfium"
+          Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium"
           Move-Item -Path "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/"
           
           
           # Cleanup
           Remove-Item -Recurse -Force temp_pdfium
-          Remove-Item -Force pdfium-win-x64.zip
-          #Remove-Item -Force pdfium.zip
+          #Remove-Item -Force pdfium-win-x64.zip
+          Remove-Item -Force pdfium.zip
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -127,8 +133,8 @@ jobs:
     name: Publish to PyPI & GitHub Release
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [linux, windows, macos, sdist]
-    environment: pypi  # ← ADD THIS LINE
+    needs: [linux, macos, sdist]
+    environment: pypi  
     permissions:
       id-token: write
       contents: write

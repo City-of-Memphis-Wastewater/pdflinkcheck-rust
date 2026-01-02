@@ -1,6 +1,6 @@
 [project]
 name = "pdflinkcheck-rust"
-version = "0.1.12"
+version = "0.1.13"
 readme="README.md"
 description = "Rust core for pdflinkcheck: fast PDF link & TOC extraction"
 requires-python = ">=3.10"
@@ -28,5 +28,5 @@ features = ["pyo3/extension-module"]
 include = [
   { path = "python/pdflinkcheck_rust/libpdfium.so", format = "wheel" },
   { path = "python/pdflinkcheck_rust/libpdfium.dylib", format = "wheel" },
-  { path = "python/pdflinkcheck_rust/pdfium.dll", format = "wheel" },
+  #{ path = "python/pdflinkcheck_rust/pdfium.dll", format = "wheel" },
 ]
