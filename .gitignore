@@ -29,3 +29,14 @@ licenses/
 *.so
 
 *.pdf
+*.dll
+*.so
+*.dylib
+
+target/
+*.so
+*.pyd
+*.dll
+*.dylib
+*.whl
+*.egg-info/
