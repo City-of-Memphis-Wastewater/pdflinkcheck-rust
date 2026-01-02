@@ -11,7 +11,7 @@ pub fn analyze_pdf(path: &str) -> Result<AnalysisResult, String> {
             .or_else(|_| {
                 // Get the directory of the current executable/library
                 // This is more robust than "./"
-                let mut path = std::env::current_exe()
+                let path = std::env::current_exe()
                     .map(|p| p.parent().map(|parent| parent.to_path_buf()))
                     .unwrap_or(None)
                     .unwrap_or_else(|| std::path::PathBuf::from("."));
