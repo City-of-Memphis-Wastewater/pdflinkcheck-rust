@@ -1,6 +1,6 @@
 [package]
 name = "pdflinkcheck_rust"  
-version = "0.1.5"
+version = "0.1.7"
 readme = "README.md"
 edition = "2021"
 license = "MIT"
@@ -30,3 +30,4 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "1"
 pdfium-render = { version = "0.8.37", features = ["thread_safe"] }
+
