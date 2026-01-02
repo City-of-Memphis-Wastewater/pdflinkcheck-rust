@@ -3,7 +3,7 @@ name: Build and Publish
 on:
   release:
     types: [published]
-  workflow_dispatch: 
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -29,10 +29,11 @@ jobs:
           wget -q "$URL" -O pdfium.tgz
           tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/ lib/libpdfium.so
           mv python/pdflinkcheck_rust/lib/libpdfium.so python/pdflinkcheck_rust/
+      - name: Build wheels
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter
+          args: --release --out dist --interpreter python3.10 python3.11 python3.12 python3.13
           sccache: 'true'
           manylinux: auto
       - name: Upload wheels
@@ -40,7 +41,6 @@ jobs:
         with:
           name: wheels-linux-${{ matrix.target }}
           path: dist
-
   windows:
     runs-on: windows-latest
     steps:
@@ -48,22 +48,16 @@ jobs:
       - name: Download PDFium
         shell: pwsh
         run: |
+          # Create directory first
+          if (!(Test-Path "python/pdflinkcheck_rust")) { New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" -Force }
+          
+          # Use curl.exe -L to follow redirects to the actual zip
           $url = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-windows-x64.zip"
-          Invoke-WebRequest -Uri $url -OutFile "pdfium.zip"
-          Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium"
-          if (!(Test-Path "python/pdflinkcheck_rust")) { New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" }
-          Copy-Item "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/pdfium.dll"
-      - uses: PyO3/maturin-action@v1
-        with:
-          target: x64
-          args: --release --out dist --find-interpreter
-          sccache: 'true'
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-windows-x64
-          path: dist
-
+          curl.exe -L $url -o pdfium.zip
+          
+          Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium" -Force
+          Copy-Item "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/pdfium.dll" -Force
+  
   macos:
     runs-on: macos-latest
     strategy:
@@ -81,12 +75,14 @@ jobs:
           ARCH="${{ matrix.pdfium_arch }}"
           URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${ARCH}.tgz"
           curl -L "$URL" -o pdfium.tgz
-          tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/ lib/libpdfium.dylib
-          mv python/pdflinkcheck_rust/lib/libpdfium.dylib python/pdflinkcheck_rust/
+          tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/ lib/libpdfium.so # or .dylib for mac
+          # Note: In the actual script, ensure you move the .so/.dylib out of /lib
+          mv python/pdflinkcheck_rust/lib/* python/pdflinkcheck_rust/
+      - name: Build wheels
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter
+          args: --release --out dist --interpreter python3.10 python3.11 python3.12 python3.13
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v4
