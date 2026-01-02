@@ -48,15 +48,25 @@ jobs:
       - name: Download PDFium
         shell: pwsh
         run: |
-          if (!(Test-Path "python/pdflinkcheck_rust")) { New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" -Force }
-          $url = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-windows-x64.zip"
-          # Force curl.exe to handle the redirect and binary stream
-          & curl.exe -L -o pdfium.zip "$url"
+          if (!(Test-Path "python/pdflinkcheck_rust")) { 
+              New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" -Force 
+          }
           
-          if ((Get-Item "pdfium.zip").Length -lt 1000) { throw "Download failed - file too small (likely 404/Redirect error)" }
+          # 1. Use the DIRECT versioned URL to skip the problematic redirect
+          $url = "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7606/pdfium-windows-x64.zip"
+          
+          # 2. Use Invoke-WebRequest - it's more "native" to PowerShell runners
+          # and often handles the TLS/networking in GitHub Actions better than curl.exe
+          Invoke-WebRequest -Uri $url -OutFile "pdfium.zip"
+          
+          # 3. Check length (should be ~2-3MB)
+          if ((Get-Item "pdfium.zip").Length -lt 100000) { 
+              throw "Download failed - file is too small. Check the URL." 
+          }
           
           Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium" -Force
           Copy-Item "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/pdfium.dll" -Force
+          
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
