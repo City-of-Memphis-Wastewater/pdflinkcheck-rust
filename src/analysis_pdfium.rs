@@ -15,7 +15,9 @@ pub fn analyze_pdf(path: &str) -> Result<AnalysisResult, String> {
                     .map(|p| p.parent().map(|parent| parent.to_path_buf()))
                     .unwrap_or(None)
                     .unwrap_or_else(|| std::path::PathBuf::from("."));
-                Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(path.to_str().unwrap_or("./")))
+                Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(
+                    path.to_str().unwrap_or("./"),
+                ))
             })
             .map_err(|e| format!("Could not find libpdfium.so: {:?}", e))?,
     );
