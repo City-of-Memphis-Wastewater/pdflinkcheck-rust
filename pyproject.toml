@@ -1,6 +1,6 @@
 [project]
 name = "pdflinkcheck-rust"
-version = "0.1.0"
+version = "0.1.1"
 description = "Rust core for pdflinkcheck: fast PDF link & TOC extraction"
 requires-python = ">=3.10"
 authors = [{ name = "George Clayton Bennett", email = "george.bennett@memphistn.gov" }]
