@@ -41,6 +41,8 @@ jobs:
 
       - name: Download PDFium
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           New-Item -ItemType Directory -Force -Path python/pdflinkcheck_rust
           # Use a specific version or 'latest' - 'latest' can be tricky with direct downloads
@@ -54,6 +56,8 @@ jobs:
           #Move-Item -Path "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/"
           
           gh release download chromium/6885 --repo bblanchon/pdfium-binaries --pattern "pdfium-win-x64.zip"
+
+          ls
           
           Expand-Archive -Path "pdfium-win-x64.zip" -DestinationPath "temp_pdfium"
           Move-Item -Path "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/"
