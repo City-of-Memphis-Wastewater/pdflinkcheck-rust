@@ -8,11 +8,14 @@ description = "Rust core for pdflinkcheck: fast PDF link & TOC extraction"
 authors = ["City of Memphis Wastewater <george.bennett@memphistn.gov>"]
 
 # This section is critical for Linux and macOS wheels
-[target.'cfg(target_os = "linux")'.metadata.maturin]
-rustflags = ["-C", "link-arg=-Wl,-rpath,$ORIGIN"]
+#[target.'cfg(target_os = "linux")'.metadata.maturin]
+#rustflags = ["-C", "link-arg=-Wl,-rpath,'$ORIGIN'"]
 
-[target.'cfg(target_os = "macos")'.metadata.maturin]
-rustflags = ["-C", "link-arg=-Wl,-rpath,@loader_path"]
+#[target.'cfg(target_os = "macos")'.metadata.maturin]
+#rustflags = ["-C", "link-arg=-Wl,-rpath,@loader_path"]
+
+[package.metadata.maturin]
+rustflags = ["-C", "link-arg=-Wl,-rpath,'$ORIGIN'"]
 
 [lib]
 name = "pdflinkcheck_rust"
