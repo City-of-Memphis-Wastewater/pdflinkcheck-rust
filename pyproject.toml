@@ -4,7 +4,10 @@ version = "0.1.1"
 description = "Rust core for pdflinkcheck: fast PDF link & TOC extraction"
 requires-python = ">=3.10"
 authors = [{ name = "George Clayton Bennett", email = "george.bennett@memphistn.gov" }]
-dependencies = []
+
+[dependencies]
+pyo3 = { version = "0.23", features = ["extension-module"] }  # Change to:
+pyo3 = { version = "0.27", features = ["extension-module"] }  # or latest, e.g., "0.27.1"
 
 [build-system]
 requires = ["maturin>=1.5,<2.0"]
