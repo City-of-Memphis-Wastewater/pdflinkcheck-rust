@@ -22,8 +22,8 @@ python-source = "python"
 features = ["pyo3/extension-module"]
 # Include all platform extensions
 
-include = [
-    "python/pdflinkcheck_rust/libpdfium.so",
-    "python/pdflinkcheck_rust/libpdfium.dylib",
-    "python/pdflinkcheck_rust/pdfium.dll"
-]
+#include = [
+#    "python/pdflinkcheck_rust/libpdfium.so",
+#    "python/pdflinkcheck_rust/libpdfium.dylib",
+#    "python/pdflinkcheck_rust/pdfium.dll"
+#]
