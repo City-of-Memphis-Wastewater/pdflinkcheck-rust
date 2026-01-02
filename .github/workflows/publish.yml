@@ -102,22 +102,11 @@ jobs:
         with:
           name: sdist
           path: dist
-      #- name: Publish to PyPI
-      #  uses: pypa/gh-action-pypi-publish@release/v1
-      #  with:
-      #    skip-existing: true
-      #    verbose: true
-      - name: Publish to PyPI with retries
-        uses: nick-fields/retry@v3
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          max_attempts: 5
-          timeout_minutes: 10
-          retry_wait_seconds: 30
-          command: |
-            pypa/gh-action-pypi-publish@release/v1
-            with:
-              skip-existing: true
-              verbose: true
+          skip-existing: true
+          verbose: true
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
