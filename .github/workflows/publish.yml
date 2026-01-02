@@ -15,71 +15,37 @@ jobs:
       matrix:
         include:
           - target: x86_64
-            pdfium_arch: linux-x64
           - target: aarch64
-            pdfium_arch: linux-arm64
     steps:
       - uses: actions/checkout@v4
-      - name: Download PDFium
-        run: |
-          mkdir -p python/pdflinkcheck_rust
-          ARCH="${{ matrix.pdfium_arch }}"
-          URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${ARCH}.tgz"
-          curl -L "$URL" -o pdfium.tgz
-          tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/ lib/libpdfium.so
-          mv python/pdflinkcheck_rust/lib/libpdfium.so python/pdflinkcheck_rust/
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --interpreter python3.10 python3.11 python3.12 python3.13
-          sccache: 'true'
           manylinux: auto
+          args: --release --out dist
+          sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-linux-${{ matrix.target }}
-          path: dist
+          path: dist/*.whl
 
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download PDFium
-        shell: pwsh
-        run: |
-          if (!(Test-Path "python/pdflinkcheck_rust")) {
-              New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" -Force
-          }
-          # Use the latest redirect (robust and always gets the newest build)
-          $url = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-windows-x64.tgz"
-          Invoke-WebRequest -Uri $url -OutFile "pdfium.tgz"
-
-          # Check approximate size (~20-30 MB for recent pdfium.dll)
-          if ((Get-Item "pdfium.tgz").Length -lt 1000000) {
-              throw "Download failed - file is too small. Check the URL or network."
-          }
-
-          # Expand the tgz (PowerShell 7+ on windows-latest has tar built-in)
-          tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/
-
-          # The file is extracted to lib/pdfium.dll
-          Move-Item "python/pdflinkcheck_rust/lib/pdfium.dll" "python/pdflinkcheck_rust/pdfium.dll" -Force
-
-          # Cleanup
-          Remove-Item "pdfium.tgz"
-          Remove-Item -Recurse "python/pdflinkcheck_rust/lib"    
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: x64
-          args: --release --out dist --interpreter python3.10 python3.11 python3.12 python3.13
+          args: --release --out dist
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-windows-x64
-          path: dist
+          path: dist/*.whl
 
   macos:
     runs-on: macos-latest
@@ -87,31 +53,20 @@ jobs:
       matrix:
         include:
           - target: x86_64
-            pdfium_arch: mac-x64
           - target: aarch64
-            pdfium_arch: mac-arm64
     steps:
       - uses: actions/checkout@v4
-      - name: Download PDFium
-        run: |
-          mkdir -p python/pdflinkcheck_rust
-          ARCH="${{ matrix.pdfium_arch }}"
-          URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${ARCH}.tgz"
-          curl -L "$URL" -o pdfium.tgz
-          # Fixed: extracting .dylib for macOS
-          tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/ lib/libpdfium.dylib
-          mv python/pdflinkcheck_rust/lib/libpdfium.dylib python/pdflinkcheck_rust/
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --interpreter python3.10 python3.11 python3.12 python3.13
+          args: --release --out dist
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-macos-${{ matrix.target }}
-          path: dist
+          path: dist/*.whl
 
   sdist:
     runs-on: ubuntu-latest
@@ -126,21 +81,25 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sdist
-          path: dist
+          path: dist/*.tar.gz
 
   release:
-    name: Release
+    name: Publish to PyPI & GitHub Release
     runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
+    if: startsWith(github.ref, 'refs/tags/')
     needs: [linux, windows, macos, sdist]
     permissions:
       id-token: write
-      contents: read
-    environment: pypi
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
+          pattern: wheels-*
           merge-multiple: true
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdist
           path: dist
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
