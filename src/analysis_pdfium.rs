@@ -8,10 +8,8 @@ pub fn analyze_pdf(path: &str) -> Result<AnalysisResult, String> {
     let pdfium = Pdfium::new(
         // 1. Try system paths first
         Pdfium::bind_to_system_library()
-            .or_else(|_| {
-                Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(""))
-            })
-            .map_err(|e| format!("Could not find libpdfium.so: {:?}", e))?,
+            .or_else(|_| Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("")))
+            .map_err(|e| format!("Could not find libpdfium library: {:?}", e))?,
     );
     let doc = pdfium
         .load_pdf_from_file(path, None)
