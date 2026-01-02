@@ -15,9 +15,18 @@ jobs:
       matrix:
         include:
           - target: x86_64
+            pdfium_arch: linux-x64
           - target: aarch64
+            pdfium_arch: linux-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4 
+      - name: Download PDFium
+        run: |
+          mkdir -p python/pdflinkcheck_rust
+          curl -L https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${{ matrix.pdfium_arch }}.tgz | tar -xz -C python/pdflinkcheck_rust
+          mv python/pdflinkcheck_rust/lib/libpdfium.so python/pdflinkcheck_rust/
+          rm -rf python/pdflinkcheck_rust/lib python/pdflinkcheck_rust/include python/pdflinkcheck_rust/args.gn
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -25,16 +34,19 @@ jobs:
           manylinux: auto
           args: --release --out dist --find-interpreter
           sccache: 'true'
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-linux-${{ matrix.target }}
-          path: dist/*.whl
-
+          
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Download PDFium
+        shell: bash
+        run: |
+          mkdir -p python/pdflinkcheck_rust
+          curl -L -o pdfium.zip https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.zip
+          unzip pdfium.zip -d python/pdflinkcheck_rust
+          mv python/pdflinkcheck_rust/x64/bin/pdfium.dll python/pdflinkcheck_rust/
+          rm -rf python/pdflinkcheck_rust/x64 python/pdflinkcheck_rust/include pdfium.zip
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -56,6 +68,13 @@ jobs:
           - target: aarch64
     steps:
       - uses: actions/checkout@v4
+      - name: Download PDFium
+        run: |
+          mkdir -p python/pdflinkcheck_rust
+          # Note: Use mac-x64 or mac-arm64 depending on your matrix
+          curl -L https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-mac-x64.tgz | tar -xz -C python/pdflinkcheck_rust
+          mv python/pdflinkcheck_rust/lib/libpdfium.dylib python/pdflinkcheck_rust/
+          rm -rf python/pdflinkcheck_rust/lib python/pdflinkcheck_rust/include python/pdflinkcheck_rust/args.gn
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
