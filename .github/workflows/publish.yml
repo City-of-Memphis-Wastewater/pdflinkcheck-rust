@@ -23,10 +23,9 @@ jobs:
       - name: Download PDFium
         run: |
           mkdir -p python/pdflinkcheck_rust
-          # Use local variables to avoid GitHub expression interpolation issues in the shell
           ARCH="${{ matrix.pdfium_arch }}"
           URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${ARCH}.tgz"
-          wget -q "$URL" -O pdfium.tgz
+          curl -L "$URL" -o pdfium.tgz
           tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/ lib/libpdfium.so
           mv python/pdflinkcheck_rust/lib/libpdfium.so python/pdflinkcheck_rust/
       - name: Build wheels
@@ -41,6 +40,7 @@ jobs:
         with:
           name: wheels-linux-${{ matrix.target }}
           path: dist
+
   windows:
     runs-on: windows-latest
     steps:
@@ -48,21 +48,15 @@ jobs:
       - name: Download PDFium
         shell: pwsh
         run: |
-          # Create directory first
-          if (!(Test-Path "python/pdflinkcheck_rust")) { 
-              New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" -Force 
-          }
-          
-          # Use curl.exe -L to follow redirects to the actual zip
+          if (!(Test-Path "python/pdflinkcheck_rust")) { New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" -Force }
           $url = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-windows-x64.zip"
-          curl.exe -L $url -o pdfium.zip
+          # Force curl.exe to handle the redirect and binary stream
+          & curl.exe -L -o pdfium.zip "$url"
+          
+          if ((Get-Item "pdfium.zip").Length -lt 1000) { throw "Download failed - file too small (likely 404/Redirect error)" }
           
           Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium" -Force
           Copy-Item "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/pdfium.dll" -Force
-
-          # 4. Cleanup temp files
-          Remove-Item pdfium.zip
-          Remove-Item -Recurse -Force temp_pdfium
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -74,7 +68,7 @@ jobs:
         with:
           name: wheels-windows-x64
           path: dist
-          
+
   macos:
     runs-on: macos-latest
     strategy:
@@ -92,6 +86,7 @@ jobs:
           ARCH="${{ matrix.pdfium_arch }}"
           URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${ARCH}.tgz"
           curl -L "$URL" -o pdfium.tgz
+          # Fixed: extracting .dylib for macOS
           tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/ lib/libpdfium.dylib
           mv python/pdflinkcheck_rust/lib/libpdfium.dylib python/pdflinkcheck_rust/
       - name: Build wheels
