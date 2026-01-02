@@ -34,19 +34,27 @@ jobs:
           manylinux: auto
           args: --release --out dist --find-interpreter
           sccache: 'true'
-          
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Download PDFium
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir -p python/pdflinkcheck_rust
-          curl -L -o pdfium.zip https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.zip
-          unzip pdfium.zip -d python/pdflinkcheck_rust
-          mv python/pdflinkcheck_rust/x64/bin/pdfium.dll python/pdflinkcheck_rust/
-          rm -rf python/pdflinkcheck_rust/x64 python/pdflinkcheck_rust/include pdfium.zip
+          New-Item -ItemType Directory -Force -Path python/pdflinkcheck_rust
+          # Use a specific version or 'latest' - 'latest' can be tricky with direct downloads
+          $url = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "pdfium.zip"
+          Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium"
+          
+          # Move the DLL to the package folder
+          Move-Item -Path "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/"
+          
+          # Cleanup
+          Remove-Item -Recurse -Force temp_pdfium
+          Remove-Item -Force pdfium.zip
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
