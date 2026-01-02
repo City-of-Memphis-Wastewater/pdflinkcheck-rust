@@ -31,15 +31,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12" # Pin to a stable version
+          python-version: "3.12"
       - name: Install uv and maturin
         run: |
           pip install uv
           uv pip install --system maturin
       - name: Build and Verify
         run: |
-          # Use maturin build instead of develop in CI to avoid venv requirements
+          # Build the wheel locally in CI
           maturin build
-          # Verify it can at least compile the bindings
+          # Install the built wheel from the target directory
           pip install target/wheels/*.whl
+          # Verify the import works with the new structure
           python -c "import pdflinkcheck_rust; print('Binding works')"

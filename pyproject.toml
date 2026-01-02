@@ -15,7 +15,7 @@ build-backend = "maturin"
 manifest-path = "Cargo.toml"
 # Ensure the .so / .pyd file is placed inside a folder of this name
 module-name = "pdflinkcheck_rust"
-#python-source = "src"
+python-source = "python"
 # Ensure the binary is included in the wheel
 #include-bins = true
 # This feature is essential for PyO3 modules
@@ -23,7 +23,7 @@ features = ["pyo3/extension-module"]
 # Include all platform extensions
 
 include = [
-    "pdflinkcheck_rust/libpdfium.so",
-    "pdflinkcheck_rust/libpdfium.dylib",
-    "pdflinkcheck_rust/pdfium.dll"
+    "python/pdflinkcheck_rust/libpdfium.so",
+    "python/pdflinkcheck_rust/libpdfium.dylib",
+    "python/pdflinkcheck_rust/pdfium.dll"
 ]

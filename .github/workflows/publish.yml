@@ -22,10 +22,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download PDFium
         run: |
-          mkdir -p pdflinkcheck_rust
-          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-$\{\{ matrix.pdfium_arch }}.tgz
-          tar -xzf pdfium-${{ matrix.pdfium_arch }}.tgz -C pdflinkcheck_rust/ lib/libpdfium.so
-          mv pdflinkcheck_rust/lib/libpdfium.so pdflinkcheck_rust/
+          mkdir -p python/pdflinkcheck_rust
+          # Use local variables to avoid GitHub expression interpolation issues in the shell
+          ARCH="${{ matrix.pdfium_arch }}"
+          URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${ARCH}.tgz"
+          wget -q "$URL" -O pdfium.tgz
+          tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/ lib/libpdfium.so
+          mv python/pdflinkcheck_rust/lib/libpdfium.so python/pdflinkcheck_rust/
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
@@ -45,10 +48,11 @@ jobs:
       - name: Download PDFium
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-windows-x64.zip" -OutFile "pdfium.zip"
+          $url = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-windows-x64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "pdfium.zip"
           Expand-Archive -Path "pdfium.zip" -DestinationPath "temp_pdfium"
-          if (!(Test-Path "pdflinkcheck_rust")) { New-Item -ItemType Directory -Path "pdflinkcheck_rust" }
-          Copy-Item "temp_pdfium/x64/bin/pdfium.dll" -Destination "pdflinkcheck_rust/pdfium.dll"
+          if (!(Test-Path "python/pdflinkcheck_rust")) { New-Item -ItemType Directory -Path "python/pdflinkcheck_rust" }
+          Copy-Item "temp_pdfium/x64/bin/pdfium.dll" -Destination "python/pdflinkcheck_rust/pdfium.dll"
       - uses: PyO3/maturin-action@v1
         with:
           target: x64
@@ -73,10 +77,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download PDFium
         run: |
-          mkdir -p pdflinkcheck_rust
-          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-$\{\{ matrix.pdfium_arch }}.tgz
-          tar -xzf pdfium-${{ matrix.pdfium_arch }}.tgz -C pdflinkcheck_rust/ lib/libpdfium.dylib
-          mv pdflinkcheck_rust/lib/libpdfium.dylib pdflinkcheck_rust/
+          mkdir -p python/pdflinkcheck_rust
+          ARCH="${{ matrix.pdfium_arch }}"
+          URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${ARCH}.tgz"
+          curl -L "$URL" -o pdfium.tgz
+          tar -xzf pdfium.tgz -C python/pdflinkcheck_rust/ lib/libpdfium.dylib
+          mv python/pdflinkcheck_rust/lib/libpdfium.dylib python/pdflinkcheck_rust/
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
