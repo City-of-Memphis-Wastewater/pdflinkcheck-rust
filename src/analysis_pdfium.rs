@@ -5,17 +5,17 @@ use std::collections::HashSet;
 
 pub fn analyze_pdf(path: &str) -> Result<AnalysisResult, String> {
     // This consolidated logic handles the binding in one go
-    //let pdfium = Pdfium::new(
-    //    Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
-    //        .or_else(|_| Pdfium::bind_to_system_library())
-    //        .map_err(|e| format!("Could not find libpdfium.so in ./ or system: {:?}", e))?
-    //);
     let pdfium = Pdfium::new(
         // 1. Try system-installed pdfium first
         Pdfium::bind_to_system_library()
             .or_else(|_| {
-                // 2. Try looking in the same folder as the executable/module
-                Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path("./"))
+                // Get the directory of the current executable/library
+                // This is more robust than "./"
+                let mut path = std::env::current_exe()
+                    .map(|p| p.parent().map(|parent| parent.to_path_buf()))
+                    .unwrap_or(None)
+                    .unwrap_or_else(|| std::path::PathBuf::from("."));
+                Pdfium::bind_to_library(Pdfium::pdfium_platform_library_name_at_path(path.to_str().unwrap_or("./")))
             })
             .map_err(|e| format!("Could not find libpdfium.so: {:?}", e))?,
     );

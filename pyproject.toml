@@ -1,6 +1,6 @@
 [project]
 name = "pdflinkcheck-rust"
-version = "0.1.3"
+version = "0.1.4"
 description = "Rust core for pdflinkcheck: fast PDF link & TOC extraction"
 requires-python = ">=3.10"
 authors = [{ name = "George Clayton Bennett", email = "george.bennett@memphistn.gov" }]
@@ -18,14 +18,14 @@ manifest-path = "Cargo.toml"
 # Ensure the .so / .pyd file is placed inside a folder of this name
 module-name = "pdflinkcheck_rust"
 python-source = "python"
-# Ensure the binary is included in the wheel
-#include-bins = true
+# Expose the maturin-built CLI
+include-bins = true
 # This feature is essential for PyO3 modules
 features = ["pyo3/extension-module"]
-# Include all platform extensions
 
-#include = [
-#    "python/pdflinkcheck_rust/libpdfium.so",
-#    "python/pdflinkcheck_rust/libpdfium.dylib",
-#    "python/pdflinkcheck_rust/pdfium.dll"
-#]
+# Include all platform extensions
+include = [
+  { path = "python/pdflinkcheck_rust/libpdfium.so", format = "wheel" },
+  { path = "python/pdflinkcheck_rust/libpdfium.dylib", format = "wheel" },
+  { path = "python/pdflinkcheck_rust/pdfium.dll", format = "wheel" },
+]
