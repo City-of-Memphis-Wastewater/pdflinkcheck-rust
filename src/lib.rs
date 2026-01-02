@@ -1,8 +1,10 @@
-use pyo3::prelude::*;
-mod analysis_pdfium;
-mod types;
+// src/lib.rs
+pub mod analysis_pdfium;
+pub mod types;
 
-use crate::analysis_pdfium::analyze_pdf;
+pub use crate::analysis_pdfium::analyze_pdf;
+
+use pyo3::prelude::*;
 
 #[pyfunction]
 #[pyo3(name = "analyze_pdf")]
