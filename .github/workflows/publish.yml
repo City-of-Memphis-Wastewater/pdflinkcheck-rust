@@ -3,9 +3,7 @@ name: Build and Publish
 on:
   release:
     types: [published]
-  #push:
-  #   branches: [main, dev]
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch: 
 
 permissions:
   contents: read
@@ -25,14 +23,20 @@ jobs:
       - name: Download PDFium
         run: |
           mkdir -p pdflinkcheck_rust
-          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${{ matrix.pdfium_arch }}.tgz
+          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-$\{\{ matrix.pdfium_arch }}.tgz
           tar -xzf pdfium-${{ matrix.pdfium_arch }}.tgz -C pdflinkcheck_rust/ lib/libpdfium.so
           mv pdflinkcheck_rust/lib/libpdfium.so pdflinkcheck_rust/
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
+          sccache: 'true'
           manylinux: auto
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: dist
 
   windows:
     runs-on: windows-latest
@@ -49,6 +53,12 @@ jobs:
         with:
           target: x64
           args: --release --out dist --find-interpreter
+          sccache: 'true'
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-x64
+          path: dist
 
   macos:
     runs-on: macos-latest
@@ -64,13 +74,20 @@ jobs:
       - name: Download PDFium
         run: |
           mkdir -p pdflinkcheck_rust
-          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-${{ matrix.pdfium_arch }}.tgz
+          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-$\{\{ matrix.pdfium_arch }}.tgz
           tar -xzf pdfium-${{ matrix.pdfium_arch }}.tgz -C pdflinkcheck_rust/ lib/libpdfium.dylib
           mv pdflinkcheck_rust/lib/libpdfium.dylib pdflinkcheck_rust/
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
+          sccache: 'true'
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.target }}
+          path: dist
+
   sdist:
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +109,7 @@ jobs:
     if: "startsWith(github.ref, 'refs/tags/')"
     needs: [linux, windows, macos, sdist]
     permissions:
-      id-token: write  # Required for PyPI Trusted Publishing
+      id-token: write
       contents: read
     environment: pypi
     steps:
@@ -102,10 +119,8 @@ jobs:
           path: dist
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: dist/*
         env:

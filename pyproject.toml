@@ -11,13 +11,19 @@ requires = ["maturin>=1.5,<2.0"]
 build-backend = "maturin"
 
 [tool.maturin]
-# This points to the Rust code
+# Points to the Rust code
 manifest-path = "Cargo.toml"
-# This ensures the .so / .pyd file is placed inside a folder of this name
+# Ensure the .so / .pyd file is placed inside a folder of this name
 module-name = "pdflinkcheck_rust"
-python-source = "."
+#python-source = "src"
 # Ensure the binary is included in the wheel
-include-bins = true
+#include-bins = true
 # This feature is essential for PyO3 modules
 features = ["pyo3/extension-module"]
-include = ["pdflinkcheck_rust/libpdfium.so"]
+# Include all platform extensions
+
+include = [
+    "pdflinkcheck_rust/libpdfium.so",
+    "pdflinkcheck_rust/libpdfium.dylib",
+    "pdflinkcheck_rust/pdfium.dll"
+]
