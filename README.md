@@ -26,18 +26,16 @@ The high-performance Rust core for `pdflinkcheck`. This package provides native 
 
 To compile the Rust code and install the package into your current virtual environment:
 
-Bash
 
-```
+```bash
 # Ensure libpdfium.so is in pdflinkcheck_rust/
 maturin develop
 ```
 
 To run the standalone Rust CLI:
 
-Bash
 
-```
+```bash
 cargo build --release
 ./target/release/pdflinkcheck-rust <path_to_pdf>
 ```
@@ -46,9 +44,8 @@ cargo build --release
 
 Because the Rust engine links to PDFium at runtime, you may need to point your library loader to the package directory during local testing:
 
-Bash
 
-```
+```bash
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/pdflinkcheck_rust
 ```
 
@@ -56,9 +53,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/pdflinkcheck_rust
 
 To create a wheel for installation in other projects:
 
-Bash
 
-```
+```bash
 maturin build --release
 ```
 
